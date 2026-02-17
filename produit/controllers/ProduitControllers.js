@@ -1,5 +1,9 @@
 // CONTROLLER PRODUITS
-const { getAllProduits, getProduitByID } = require("../models/ProduitModels");
+const {
+  getAllProduits,
+  getProduitByID,
+  getProduitByCategory,
+} = require("../models/ProduitModels");
 
 //LE MODÈLE ENVOIE DES DONNEES ICI ET LE CONTROLLER LES ENVOIENT A L'UTILISATEUR
 
@@ -44,4 +48,22 @@ const getByID = async (req, res) => {
   }
 };
 
-module.exports = { getAll, getByID };
+//Récupérer les produits par catégorie
+const getByCategory = async (req, res) => {
+  try {
+    const { categorie } = req.params;
+    const produits = await getProduitByCategory(categorie);
+
+    res.json({
+      message: `Produits de la catégorie ${categorie}`,
+      count: produits.length,
+      produits,
+    });
+  } catch (error) {
+    console.error("Erreur de récupération par catégorie", error.message);
+    res.status(500).json({
+      message: "Erreur de récupération des articles",
+    });
+  }
+};
+module.exports = { getAll, getByID, getByCategory };

@@ -2,13 +2,14 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 require("dotenv").config(); // permet de charger les var d'env depuis .env
+const cookieParser = require("cookie-parser");
 
 //connx a la BDD
 const db = require("./db");
 
 //importation des routes
 const produitRoutes = require("./produit/routes/ProduitRoutes");
-
+const ClientRoutes = require("./clients/routes/ClientRoutes");
 // Créa de l'application Express
 const app = express();
 
@@ -19,14 +20,21 @@ app.use(express.json());
 //Logger de requête HTTP dans la console (a commenter au passage en ligne)
 app.use(morgan("dev"));
 
+//Sert les fichiers statiques (images, produits)
+app.use(express.static("public"));
+
 //Cors permet les requêtes cross-origines (entre front et bdd)
 // Cross Origin Ressource Sharing (CORS) - Obligatoire sinon le navigateur bloque les requetes
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
     methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
   }),
 );
+
+//Parser les cookies dans req
+app.use(cookieParser());
 
 //ROUTES
 
@@ -40,6 +48,7 @@ app.get("/health", (req, res) => {
 
 //Routes de l'API
 app.use("/api/produits", produitRoutes);
+app.use("/api/clients", ClientRoutes);
 
 //Gestion des erreurs
 
