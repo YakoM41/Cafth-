@@ -11,6 +11,7 @@ const jwt = require("jsonwebtoken");
 
 const register = async (req, res) => {
   try {
+    console.log("Données reçues lors de l'inscription :", req.body);
     const { Nom, Prenom, email, Mot_de_passe } = req.body;
 
     //Verifier si l'Email existe déjà
@@ -28,7 +29,7 @@ const register = async (req, res) => {
     const result = await createClient({
       Nom,
       Prenom,
-      email,
+      email: email,
       Mot_de_passe: hash,
     });
 

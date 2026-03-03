@@ -23,7 +23,7 @@ const createClient = async (clientData) => {
   const {
     Nom,
     Prenom,
-    Email,
+    email,
     Mot_de_passe,
     adresse_facturation,
     cp_facturation,
@@ -39,15 +39,15 @@ const createClient = async (clientData) => {
     [
       Nom,
       Prenom,
-      Email,
+      email,
       Mot_de_passe,
-      adresse_facturation || null,
-      cp_facturation || null,
-      ville_facturation || null,
-      adresse_livraison || null,
-      cp_livraison || null,
-      ville_livraison || null,
-      telephone || null,
+      cp_facturation || null, // -> CP
+      ville_facturation || null, // -> Ville
+      telephone || null, // -> Téléphone
+      cp_livraison || null, // -> CP_livraison
+      ville_livraison || null, // -> Ville_livraison
+      adresse_livraison || null, // -> Adresse_livraison
+      adresse_facturation || null, // -> Adresse
     ],
   );
   return result;
