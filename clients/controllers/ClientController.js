@@ -5,13 +5,13 @@ const {
   createClient,
   comparePassword,
   findClientById,
+  updateClient,
 } = require("../models/ClientModels");
 
 const jwt = require("jsonwebtoken");
 
 const register = async (req, res) => {
   try {
-    console.log("Données reçues lors de l'inscription :", req.body);
     const { Nom, Prenom, email, Mot_de_passe } = req.body;
 
     //Verifier si l'Email existe déjà
@@ -29,7 +29,7 @@ const register = async (req, res) => {
     const result = await createClient({
       Nom,
       Prenom,
-      email: email,
+      email,
       Mot_de_passe: hash,
     });
 
@@ -75,7 +75,8 @@ const login = async (req, res) => {
 
     //GÉNÉRER LE TOKEN JWT
     // expire en secondes
-    const expire = parseInt(process.env.JWT_EXPIRES_IN, 10 || 3600);
+    const expireValeur = process.env.JWT_EXPIRES_IN || "3600";
+    const expire = parseInt(expireValeur, 10);
     const token = jwt.sign(
       { id: client.ID_client, email: client.E_mail },
       process.env.JWT_SECRET,
@@ -85,9 +86,10 @@ const login = async (req, res) => {
     //On place le token dans un cookie HttpOnly
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false, // mettre sur vrai en Https (c'est a dire en ligne)
-      sameSite: "lax",
+      secure: true, // mettre sur vrai en Https (c'est a dire en ligne)
+      sameSite: "none",
       maxAge: expire * 1000,
+      domain: ".zmoussaoui.dev-campus.fr",
     });
     res.json({
       message: "Connexion réussie",
@@ -111,8 +113,8 @@ const login = async (req, res) => {
 const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: false, // mettre sur vrai en Https (c'est a dire en ligne)
-    sameSite: "lax",
+    secure: true, // mettre sur vrai en Https (c'est a dire en ligne)
+    sameSite: "none",
   });
   res.json({ message: "Déconnexion réussie" });
 };
@@ -146,4 +148,59 @@ const getMe = async (req, res) => {
       .json({ message: "Erreur lors de la vérification de session" });
   }
 };
-module.exports = { register, login, logout, getMe };
+
+// METTRE À JOUR LE PROFIL DU CLIENT CONNECTÉ
+const updateMe = async (req, res) => {
+  try {
+    const clientId = req.client.id; // ID du client extrait du token JWT
+    const clientData = req.body;
+
+    console.log("Données reçues pour la mise à jour :", clientData);
+
+    // --- TRANSFORMATION DES DONNÉES D'ADRESSE ---
+    if (
+      clientData.addresses &&
+      Array.isArray(clientData.addresses) &&
+      clientData.addresses.length > 0
+    ) {
+      const address = clientData.addresses[0]; // On prend la première adresse du tableau
+
+      // On mappe les champs du frontend vers les champs attendus par le backend
+      // Hypothèse : il s'agit de l'adresse de facturation
+      if (address.rue) clientData.adresse_facturation = address.rue;
+      if (address.ville) clientData.ville_facturation = address.ville;
+      if (address.codePostal) clientData.cp_facturation = address.codePostal;
+
+      // On supprime la clé "addresses" qui n'est pas utile pour le modèle
+      delete clientData.addresses;
+    }
+    // --- FIN DE LA TRANSFORMATION ---
+
+    // On ne peut pas mettre à jour le mot de passe ou l'ID via cette route
+    delete clientData.Mot_de_passe;
+    delete clientData.ID_client;
+
+    const result = await updateClient(clientId, clientData);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Client introuvable ou aucune donnée valide à mettre à jour.",
+      });
+    }
+
+    // Récupérer les informations mises à jour pour les renvoyer
+    const updatedClientInfo = await findClientById(clientId);
+
+    res.json({
+      message: "Profil mis à jour avec succès.",
+      client: updatedClientInfo[0],
+    });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour du profil:", error.message);
+    res
+      .status(500)
+      .json({ message: "Erreur lors de la mise à jour du profil." });
+  }
+};
+
+module.exports = { register, login, logout, getMe, updateMe };

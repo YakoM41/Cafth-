@@ -4,12 +4,20 @@ const morgan = require("morgan");
 require("dotenv").config(); // permet de charger les var d'env depuis .env
 const cookieParser = require("cookie-parser");
 
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./swagger"); // import config
+
 //connx a la BDD
 const db = require("./db");
+
+// Routes Swagger
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get("/api-docs.json", (req, res) => res.json(swaggerSpec));
 
 //importation des routes
 const produitRoutes = require("./produit/routes/ProduitRoutes");
 const ClientRoutes = require("./clients/routes/ClientRoutes");
+
 // Créa de l'application Express
 const app = express();
 
@@ -25,11 +33,18 @@ app.use(express.static("public"));
 
 //Cors permet les requêtes cross-origines (entre front et bdd)
 // Cross Origin Ressource Sharing (CORS) - Obligatoire sinon le navigateur bloque les requetes
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "http://localhost:5173",
+  "https://cafthe-vente.zmoussaoui.dev-campus.fr",
+];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: allowedOrigins, // Utilisation directe du tableau
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 

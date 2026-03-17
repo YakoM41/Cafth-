@@ -53,6 +53,44 @@ const createClient = async (clientData) => {
   return result;
 };
 
+// METTRE À JOUR UN CLIENT
+const updateClient = async (clientId, clientData) => {
+  const fields = [];
+  const values = [];
+  // Mappage entre les clés de l'objet clientData et les colonnes de la BDD
+  const columnMapping = {
+    Nom: "Nom",
+    Prenom: "Prénom",
+    Email: "E_mail",
+    Adresse: "Adresse",
+    cp_facturation: "CP",
+    ville_facturation: "Ville",
+    adresse_livraison: "Adresse_livraison",
+    cp_livraison: "CP_livraison",
+    ville_livraison: "Ville_livraison",
+    telephone: "Téléphone",
+  };
+
+  // Construit dynamiquement la requête UPDATE
+  for (const key of Object.keys(clientData)) {
+    if (columnMapping[key]) {
+      fields.push(`${columnMapping[key]} = ?`);
+      values.push(clientData[key]);
+    }
+  }
+
+  if (fields.length === 0) {
+    return { affectedRows: 0 }; // Rien à mettre à jour
+  }
+
+  values.push(clientId); // Ajouter l'ID du client pour la clause WHERE
+
+  const sql = `UPDATE client SET ${fields.join(", ")} WHERE ID_client = ?`;
+
+  const [result] = await db.query(sql, values);
+  return result;
+};
+
 //HASHAGE DE MDP
 
 const hashPassword = async (password) => {
@@ -70,4 +108,5 @@ module.exports = {
   hashPassword,
   comparePassword,
   findClientById,
+  updateClient,
 };
